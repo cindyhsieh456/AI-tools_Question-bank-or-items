@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>教師檢定｜隨機題庫</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#172238;--muted:#667085;--line:#e4e8f0;--accent:#465bd8;--accent2:#eef0ff;--good:#16845b;--bad:#c43e52;--shadow:0 14px 40px #18233b0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:18px max(20px,calc((100vw - 900px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-weight:800;letter-spacing:.2px}.brand small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:3px}
+.wrap{max-width:820px;margin:30px auto;padding:0 18px 48px}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;color:var(--muted);font-size:13px}
+.progress{height:5px;background:#e5e9f3;border-radius:99px;overflow:hidden;margin-bottom:22px}.progress span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:clamp(22px,5vw,38px);box-shadow:var(--shadow)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.tag{font-size:12px;color:#4d5b78;background:#f0f3f9;border-radius:7px;padding:6px 9px}
+h1{font-size:clamp(20px,3vw,27px);line-height:1.65;margin:0 0 24px;letter-spacing:.1px}
+.option{display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:13px;padding:15px 16px;margin:10px 0;cursor:pointer;font:inherit;line-height:1.65;transition:.15s}
+.option:hover:not(:disabled){border-color:#9ba6ef;background:#fafaff}.letter{flex:0 0 28px;height:28px;border-radius:8px;background:#f0f2f8;display:grid;place-items:center;font-size:13px;font-weight:800;color:#5c6680}
+.option.selected{border-color:var(--accent);background:var(--accent2)}.option.correct{border-color:#75c5a5;background:#effaf5}.option.wrong{border-color:#e6a0aa;background:#fff3f4}
+.option.correct .letter{background:#d5f2e4;color:var(--good)}.option.wrong .letter{background:#ffe0e4;color:var(--bad)}
+.feedback{display:none;padding:14px 16px;border-radius:12px;margin-top:18px;line-height:1.7;font-size:14px}.feedback.show{display:block}.feedback.good{background:#effaf5;color:#176746}.feedback.bad{background:#fff3f4;color:#9d2e40}
+.controls{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:24px;flex-wrap:wrap}
+button{font:inherit}.btn{border:1px solid var(--line);border-radius:11px;padding:10px 15px;background:#fff;color:var(--ink);cursor:pointer;font-weight:650}.btn:hover{background:#f7f8fc}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:#3548c2}.btn.bookmarked{color:#a66b00;background:#fff8e5;border-color:#f1d58a}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px}.stat b{display:block;font-size:22px}.stat span{color:var(--muted);font-size:12px}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);background:#fff;border:1px solid var(--line);padding:9px 11px;border-radius:10px}
+.notice{font-size:12px;color:var(--muted);line-height:1.6;margin:18px 4px 0}
+@media(max-width:560px){header{padding:15px 18px}.wrap{margin-top:20px}.stats{gap:7px}.stat{padding:10px}.stat b{font-size:19px}.controls{align-items:stretch}.controls .btn{flex:1}.topline{align-items:flex-start}}
+</style></head>
+<body>
+<header><div class="brand">教師檢定題庫 <small>教育法規與議題・隨機練習</small></div><button class="btn" id="restart">重新抽題</button></header>
+<main class="wrap">
+<div class="stats"><div class="stat"><b id="total">24</b><span>題庫總題數</span></div><div class="stat"><b id="correctCount">0</b><span>本輪答對</span></div><div class="stat"><b id="wrongCount">0</b><span>錯題收藏</span></div></div>
+<div class="topline"><span id="counter">第 1 題</span><span id="progressText">0 / 24 已作答</span></div><div class="progress"><span id="progressBar"></span></div>
+<section class="card">
+<div class="meta"><span class="tag" id="year"></span><span class="tag" id="subject"></span></div>
+<h1 id="question"></h1><div id="options"></div>
+<div class="feedback" id="feedback"></div>
+<div class="controls"><div class="tools"><button class="btn" id="bookmark">☆ 標記錯題</button><label class="toggle"><input type="checkbox" id="repeatWrong"> 錯題重複練習</label></div><button class="btn primary" id="next">下一題 →</button></div>
+</section>
+<p class="notice">選項每次出題會重新排序，作答判定依據原題正確選項的「敘述內容」，不依賴原本的 A／B／C／D 字母。錯題與書籤會保存在此瀏覽器中。</p>
+</main>
+<script>
+const BANK = [{"id": 1, "year": "114 年度", "subject": "中等學校 課程教學與評量 第 1 題", "question": "星星中學推動性別平等教育時，在校園內展示性別平等的標語，並取消區分性別的服裝要求。此做法較屬於下列何種課程？", "options": ["空白課程", "潛在課程", "正式課程", "空無課程"], "answerLetter": "B", "answerText": "潛在課程"}, {"id": 2, "year": "114 年度", "subject": "國民小學 課程教學與評量 第 11 題", "question": "有關數位性別暴力防治教育的做法，下列何者不屬於正式課程？", "options": ["在園遊會中設置數位性別暴力防治攤位，安排專家講座及宣導", "以數位性別暴力防治做為跨領域統整性主題，發展為校訂課程", "彈性學習課程以專題探究方式，深入了解數位性別暴力的防治", "融入社會領域，引導學生了解數位性別暴力的影響及因應方式"], "answerLetter": "A", "answerText": "在園遊會中設置數位性別暴力防治攤位，安排專家講座及宣導"}, {"id": 3, "year": "114 年度", "subject": "中等學校 課程教學與評量 第 13 題", "question": "Banks 主張的多元文化課程設計模式中，改變既有的課程結構，從不同族群、宗教團體的立場探討相關議題，進而重構文化的概念與觀點。此模式屬於下列何者？", "options": ["貢獻取向", "附加取向", "轉化取向", "行動取向"], "answerLetter": "C", "answerText": "轉化取向"}, {"id": 4, "year": "114 年度", "subject": "中等學校 課程教學與評量 第 25 題", "question": "陳老師請同學站在事故受害者及其親友的立場去思考。強調的是下列何種能力的培養？", "options": ["社會覺察", "建立關係", "人際技巧", "承擔決定"], "answerLetter": "A", "answerText": "社會覺察"}, {"id": 5, "year": "114 年度", "subject": "國民小學 課程教學與評量 第 13 題", "question": "根據《教育部社會情緒學習中長程計畫》，下列做法何者最符合社會情緒學習 (SEL) 中「自我管理」的範疇？", "options": ["引導學生設立目標並規劃實踐的步驟", "引導學生體會他人情緒並培養同理心", "使用情緒小卡，讓學生分享當下的心情", "設計小天使、小主人的角色活動，學習關懷與互助"], "answerLetter": "A", "answerText": "引導學生設立目標並規劃實踐的步驟"}, {"id": 6, "year": "113 年度", "subject": "中等學校 課程教學與評量 第 23 題", "question": "下列有關媒體素養教育的相關敘述，何者較為適切？", "options": ["獨立於政治及文化領域", "應禁止短影音", "包含產製數位內容之能力", "現代公民從單向接收者轉變為雙向收發資訊之創用者"], "answerLetter": "D", "answerText": "現代公民從單向接收者轉變為雙向收發資訊之創用者"}, {"id": 7, "year": "113 年度", "subject": "國民小學 課程教學與評量 第 4 題", "question": "李老師讓學生反思社區中的文化偏見現象，提出可能之解決方案，並設法落實方案，以協助社區居民瞭解東南亞文化。此課程設計較符合下列何種多元文化課程取向？", "options": ["貢獻取向", "附加取向", "轉化取向", "社會行動取向"], "answerLetter": "D", "answerText": "社會行動取向"}, {"id": 8, "year": "113 年度", "subject": "國民小學 課程教學與評量 第 5 題", "question": "下列何者屬於環境教育的情意領域目標？", "options": ["規劃生活行動方案", "支持臺灣促進環境永續發展的減碳方案", "評估氣候變遷影響", "分析碳排與變遷因果關係"], "answerLetter": "B", "answerText": "支持臺灣促進環境永續發展的減碳方案"}, {"id": 9, "year": "112 年度", "subject": "國民小學 教育理念與實務 第 20 題", "question": "教師知悉疑似校園性騷擾事件應於24 小時內通報，係依據下列哪一項法規？", "options": ["教育基本法", "兒童及少年福利與權益保障法", "家庭暴力防治法", "性別平等教育法"], "answerLetter": "D", "answerText": "性別平等教育法"}, {"id": 10, "year": "112 年度", "subject": "國民小學 課程教學與評量 第 24 題", "question": "張老師欲設計「認識兒童權利公約」的探究教學，下列哪些活動設計較適切？甲、討論「兒童最佳利益」；乙、朗讀「生存權」內容；丙、指出「禁止歧視」條文；丁、從「表意權」引導對運動場設計提出建議。", "options": ["甲乙", "甲丁", "乙丙", "丙丁"], "answerLetter": "B", "answerText": "甲丁"}, {"id": 11, "year": "111 年度", "subject": "國民小學 教育理念與實務 第 10 題", "question": "「學校應用正向管教辦法輔導有霸凌行為的同學」，這種作法是運用何種懲罰原理？", "options": ["報復說", "懲戒說", "感化說", "人道說"], "answerLetter": "C", "answerText": "感化說"}, {"id": 12, "year": "111 年度", "subject": "國民小學 課程教學與評量 第 8 題", "question": "林老師在進行國語課成語教學時，以「弄璋之喜」、「弄瓦之喜」為例，引導學生探討文化中隱含的性別不平等議題。呼應性別平等教育議題的哪一項實質內涵？", "options": ["了解與尊重家庭型態的多樣性", "了解不同性別者的成就與貢獻", "了解圖像、語言等的性別意涵", "培養性別間合宜表達情感的能力"], "answerLetter": "C", "answerText": "了解圖像、語言等的性別意涵"}, {"id": 13, "year": "111 年度", "subject": "中等學校 課程教學與評量 第 15 題", "question": "班克斯(J. Banks)多元文化課程的取向有：A.貢獻取向、B.附加取向、C.轉化取向、D. 行動取向。下列三位老師的作法符合班克斯(J. Banks)哪種取向？甲、在既有課程中，加入特定族群相關的議題；乙、改變既有課程，從不同文化及族群的觀點來重新建構課程；丙、在特殊的節日中，表揚特定族群有貢獻的人物。", "options": ["甲-A，乙-C，丙-B", "甲-A，乙-D，丙-C", "甲-B，乙-C，丙-A", "甲-B，乙-A，丙-D"], "answerLetter": "C", "answerText": "甲-B，乙-C，丙-A"}, {"id": 14, "year": "110 年度", "subject": "國民小學 教育理念與實務 第 21 題", "question": "現行中小學(含附設幼兒園)校內會議，下列哪一種會議的組成方式，其任一性別委員應占委員總數三分之一以上？", "options": ["特殊教育推行委員會會議", "學校課程發展委員會會議", "性別平等教育委員會會議", "校園霸凌事件審議小組會議"], "answerLetter": "C", "answerText": "性別平等教育委員會會議"}, {"id": 15, "year": "110 年度", "subject": "國民小學 教育理念與實務 第 23 題", "question": "依據現行《性別平等教育法》之規定，學校應於受理申請或檢舉後完成調查，必要時，得延長之，調查時間最晚應於幾個月之內完成？", "options": ["二個月", "三個月", "四個月", "五個月"], "answerLetter": "B", "answerText": "三個月"}, {"id": 16, "year": "110 年度", "subject": "中等學校 課程教學與評量 第 19 題", "question": "依據《十二年國民基本教育課程綱要－議題融入說明手冊》，下列敘述何者正確？", "options": ["議題不可單獨設科", "議題可由教師視情形融入課堂教學", "應優先在團體活動實施", "每科至少應包含 1 個議題"], "answerLetter": "B", "answerText": "議題可由教師視情形融入課堂教學"}, {"id": 17, "year": "109 年度", "subject": "中等學校 課程與教學 第 8 題", "question": "當教師確知班上學生遭家長喝醉酒毆打成傷時，依據「家庭暴力防治法」，應如何處理？", "options": ["24 小時內通報當地主管機關", "繼續觀察學生受暴狀況，情況嚴重時才予以通報", "協同其他老師進行家庭訪問，視情況再決定是否通報", "家長可能是因為一時衝動才動手，告知同學要懂得自我保護"], "answerLetter": "A", "answerText": "24 小時內通報當地主管機關"}, {"id": 18, "year": "109 年度", "subject": "國民小學 教育原理與制度 第 34 題", "question": "張老師知悉服務學校發生疑似校園性侵害事件，卻沒有依照「性別平等教育法」的規定通報，導致校園性侵害事件再度發生。依據「教師法」，此種情事經學校教師評審委員會查證屬實審議通過，並報主管機關核准後，張老師會面臨什麼樣的後果？", "options": ["解聘，且終身不得聘任為教師", "不續聘，且終身不得聘任為教師", "解聘，且一年至四年不得聘任為教師", "不續聘，且一年至四年不得聘任為教師"], "answerLetter": "A", "answerText": "解聘，且終身不得聘任為教師"}, {"id": 19, "year": "109 年度", "subject": "國民小學 教育原理與制度 第 35 題", "question": "為健全我國人權保障體系...各級政府機關應符合「兩公約」...上述「兩公約」係指下列何者？", "options": ["自由與安全權利國際公約及兒童權利公約", "公民與選舉權利國際公約及社會安全權利國際公約", "政治與自由權利國際公約及社會衛生福利權利國際公約", "公民與政治權利國際公約及經濟社會文化權利國際公約"], "answerLetter": "D", "answerText": "公民與政治權利國際公約及經濟社會文化權利國際公約"}, {"id": 20, "year": "109 年度", "subject": "國民小學 課程與教學 第 19 題", "question": "近年來國小各學習領域教科書中，陸續出現許多客家文化內容的介紹...此方式較屬於下列哪一種多元文化課程發展取向？", "options": ["添加取向", "貢獻取向", "轉化取向", "社會行動取向"], "answerLetter": "A", "answerText": "添加取向"}, {"id": 21, "year": "109 年度", "subject": "中特學校 課程與教學 第 1 題", "question": "反霸凌課程目標中，「使用溝通策略終止霸凌者的行為」屬於哪一面向？", "options": ["知識面向", "態度面向", "情意面向", "技能面向"], "answerLetter": "D", "answerText": "技能面向"}, {"id": 22, "year": "未標示", "subject": "環境教育議題圈", "question": "教師讓學生比較步行、騎自行車、搭乘大眾運輸及自行開車的碳排放，接著請學生依據家庭與通學 情況，提出可實行的低碳交通選擇。此設計最能展現哪一項環境教育精神？", "options": ["將環境議題與日常生活連結，促進知識應用與行動實踐", "只需知道碳排放的名詞定義", "要求所有學生採取完全相同的交通方式", "將環境議題限制在自然科課本中"], "answerLetter": "A", "answerText": "將環境議題與日常生活連結，促進知識應用與行動實踐"}, {"id": 23, "year": "未標示", "subject": "性別平等教育議題圈", "question": "林老師在進行性別平等教育課程設計時，改變整體課程結構，引導學生從女性及多元性別者的觀點重新審視科學史與歷史事件。依據班克斯 (J. Banks) 的多元文化課程取向，林老師的做法屬於下列哪一種？", "options": ["貢獻取向", "附加取向", "轉型取向", "社會行動取向"], "answerLetter": "C", "answerText": "轉型取向"}, {"id": 24, "year": "未標示", "subject": "海洋教育議題圈", "question": "依據《十二年國民基本教育課程綱要》，「海洋教育」為十九項議題之一。某國小教師在社會課安排學生探討「臺灣沿海漁村的傳統捕魚方式與祭典文化（如王船祭）」，主要符合海洋教育的哪一項實質內涵？", "options": ["海洋休閒", "海洋社會與文化", "海洋科學與技術", "海洋資源與永續"], "answerLetter": "B", "answerText": "海洋社會與文化"}];
+const LETTERS=["A","B","C","D"];
+const $=id=>document.getElementById(id);
+const load=(k,def)=>{try{return JSON.parse(localStorage.getItem(k))??def}catch(e){return def}};
+let bookmarks=new Set(load("teacherquiz-bookmarks",[]));
+let wrongs=new Set(load("teacherquiz-wrongs",[]));
+let stats=load("teacherquiz-stats",{correct:0,answered:0});
+let order=[],pos=0,currentOptions=[],selected=null,answered=false,sessionCorrect=0,sessionAnswered=0;
+function save(){localStorage.setItem("teacherquiz-bookmarks",JSON.stringify([...bookmarks]));localStorage.setItem("teacherquiz-wrongs",JSON.stringify([...wrongs]));localStorage.setItem("teacherquiz-stats",JSON.stringify(stats));}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function makeRound(){let repeat=$("repeatWrong").checked;let pool=repeat&&wrongs.size?[...wrongs].map(id=>BANK.find(q=>q.id===id)).filter(Boolean):BANK;order=shuffle(pool.map(q=>q.id));pos=0;render();updateStats()}
+function render(){if(!order.length){$("question").textContent="目前沒有可練習的錯題";$("options").innerHTML="";return}
+const q=BANK.find(x=>x.id===order[pos]);selected=null;answered=false;currentOptions=shuffle(q.options.map((text,index)=>({text,originalIndex:index})));
+$("counter").textContent=`第 ${pos+1} / ${order.length} 題`;$("progressText").textContent=`${sessionAnswered} 題已作答`;
+$("progressBar").style.width=`${sessionAnswered/Math.max(BANK.length,sessionAnswered||1)*100}%`;
+$("year").textContent=q.year;$("subject").textContent=q.subject;$("question").textContent=q.question;
+$("options").innerHTML="";currentOptions.forEach((o,i)=>{const b=document.createElement("button");b.className="option";b.innerHTML=`<span class="letter">${LETTERS[i]}</span><span></span>`;b.querySelector("span:last-child").textContent=o.text;b.onclick=()=>choose(i);$("options").appendChild(b)});
+$("feedback").className="feedback";$("feedback").textContent="";
+$("bookmark").classList.toggle("bookmarked",bookmarks.has(q.id));$("bookmark").textContent=bookmarks.has(q.id)?"★ 已加入錯題書籤":"☆ 標記錯題";
+$("next").textContent=pos===order.length-1?"完成本輪 ✓":"下一題 →";
+}
+function choose(i){if(answered)return;answered=true;selected=i;const q=BANK.find(x=>x.id===order[pos]);const right=currentOptions[i].text===q.answerText;
+[...$("options").children].forEach((el,j)=>{el.disabled=true;if(currentOptions[j].text===q.answerText)el.classList.add("correct");if(j===i&&!right)el.classList.add("wrong")});
+const f=$("feedback");f.className="feedback show "+(right?"good":"bad");f.textContent=right?`答對了！正確答案：${q.answerText}`:`答錯了。正確答案：${q.answerText}`;
+sessionAnswered++;stats.answered++;if(right){sessionCorrect++;stats.correct++;wrongs.delete(q.id)}else{wrongs.add(q.id);bookmarks.add(q.id)}
+save();updateStats();$("bookmark").classList.toggle("bookmarked",bookmarks.has(q.id));$("bookmark").textContent=bookmarks.has(q.id)?"★ 已加入錯題書籤":"☆ 標記錯題";
+$("progressText").textContent=`${sessionAnswered} 題已作答`;$("progressBar").style.width=`${Math.min(100,sessionAnswered/Math.max(BANK.length,sessionAnswered)*100)}%`;
+}
+function updateStats(){$("total").textContent=BANK.length;$("correctCount").textContent=sessionCorrect;$("wrongCount").textContent=bookmarks.size;}
+$("bookmark").onclick=()=>{const id=order[pos];if(bookmarks.has(id))bookmarks.delete(id);else bookmarks.add(id);save();$("bookmark").classList.toggle("bookmarked",bookmarks.has(id));$("bookmark").textContent=bookmarks.has(id)?"★ 已加入錯題書籤":"☆ 標記錯題";updateStats()};
+$("next").onclick=()=>{if(!answered){if(!confirm("這題還沒作答，要直接跳過嗎？"))return}if(pos<order.length-1){pos++;render()}else{alert(`本輪完成！答對 ${sessionCorrect} 題，共作答 ${sessionAnswered} 題。`);makeRound()}};
+$("restart").onclick=()=>{sessionCorrect=0;sessionAnswered=0;makeRound()};
+$("repeatWrong").onchange=()=>{sessionCorrect=0;sessionAnswered=0;makeRound()};
+makeRound();
+</script></body></html>
